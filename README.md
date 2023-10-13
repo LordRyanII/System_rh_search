@@ -54,8 +54,7 @@
 <h2>Documentações </h2>
 <p>Referência de documentação:</p>
 <ul>
-	<li>OpenIa: <li>https://platform.openai.com/docs/introduction/overview <br>
+	<li>OpenIa:https://platform.openai.com/docs/introduction/overview <br>
 <li>Linkedin Developer: https://developer.linkedin.com <br>
 <li>Linkedin Oath for node.js: https://github.com/linkedin-<li>developers/linkedin-api-js-client#simple-api-request-example <br>
-<li>Linkin Perfil de testes: https://www.linkedin.com/company/krust-developers/
 </ul>
