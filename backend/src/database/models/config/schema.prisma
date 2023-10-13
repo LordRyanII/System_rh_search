@@ -1,0 +1,38 @@
+// schema.prisma
+
+// Define o provedor de banco de dados (mysql neste caso) e a URL de conexão.
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASEPRISMA") 
+}
+
+
+// Define o modelo de dados para representar o perfil de um usuário.
+model UserProfile {
+  id          Int       @id @default(autoincrement())
+  nome        String
+  detalhes    String
+  localizacao String
+  experiencia Experiencia[]
+  tags        Tag[]    // Relação com o modelo Tag
+}
+
+// Define o modelo de dados para representar o experiência de trabalho.
+model Experiencia {
+  id        Int      @id @default(autoincrement())
+  titulo    String
+  empresa   String
+  periodo   String
+  userProfile UserProfile[]  // Campo oposto para a relação
+}
+
+// Define o modelo de dados para representar as tags.
+model Tag {
+  id      Int       @id @default(autoincrement())
+  nome    String
+  userProfiles UserProfile[]  // Campo oposto para a relação
+}
+
+generator client {
+  provider = "prisma-client-js"
+}

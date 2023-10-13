@@ -1,0 +1,19 @@
+BUSCAR USUÁRIO POR NOME
+  import requests
+
+  url = "https://api.linkedin.com/v1/people-search:(people:(id,first-name,last-name,headline,picture-url,industry,positions:(id,title,summary,start-date,end-date,is-current,company:(id,name,type,size,industry,ticker)),educations:(id,school-name,field-of-study,start-date,end-date,degree,activities,notes)),num-results)?first-name=<PRIMEIRONOME>&last-name=<SEGUNDO NOME>"
+
+  headers = {
+      "Authorization": "Bearer YOUR_ACCESS_TOKEN",
+      "Content-Type": "application/json"
+  }
+
+  response = requests.get(url, headers=headers)
+  data = response.json()
+
+  # Parse the response and extract user information
+  # Example: print the first name and last name of the first user found
+  if "people" in data and data["people"]["_total"] > 0:
+      user = data["people"]["values"][0]
+      print("First Name:", user["firstName"])
+      print("Last Name:", user["lastName"])
