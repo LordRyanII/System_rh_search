@@ -1,0 +1,17 @@
+.display-dashboard{
+    width:90%;
+    text-align: center;
+    margin: auto;
+    color: white;
+    background-color: #042b41b3;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 10px 5px 5px rgba(0, 0, 0, 0.47);
+}
+
+.display-dashboard > h1{
+    font-family: Verdana, Geneva, Tahoma, sans-serif;
+    font-size: 50px;
+    text-decoration: underline;
+    margin-bottom: 5%;
+}

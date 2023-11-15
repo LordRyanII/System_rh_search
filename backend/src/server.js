@@ -1,7 +1,7 @@
 require('dotenv').config({ path: './src/.env' });
 const express = require('express');
 const app = express();
-const porta = 3001;
+const porta = process.env.PORT || 3001;
 const cors = require('cors');
 const conexao = require('./database/models/Mongodb/connectModels');
 const mongoConecction = new conexao(process.env.CONNECTIONSTRING);
@@ -12,7 +12,7 @@ const { userRoutes } = require('./routes/userRoutes')
 const { linkedinRoutes } = require('./routes/linkedinRoutes')
 
 app.use(cors({
-    origin: '127.0.0.1',
+    origin: '127.0.0.1' && 'http://localhost:3030',
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
     credentials: true,
     optionsSuccessStatus: 204,
@@ -32,3 +32,7 @@ app.listen(porta, () => {
     console.log(`Servidor iniciado no endereço: http://localhost:${porta}`);
     console.log(`--------------------------------------------------------`);
 });
+
+
+
+

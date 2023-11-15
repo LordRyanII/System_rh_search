@@ -9,7 +9,6 @@ module.exports = class Database {
   connect() {
     const database = mongoose.connect(this.chave, { useNewUrlParser: true, useUnifiedTopology: true })
       .then(() => {
-        console.error('----------------------------------------------------------');
         console.log('MongoDb connection successful');
         console.error('---------------------------------------------------------');
       })
@@ -21,6 +20,6 @@ module.exports = class Database {
   }
 
   closed() {
-    this.dateBase.disconnect()
+    this.database.disconnect()
   }
 }

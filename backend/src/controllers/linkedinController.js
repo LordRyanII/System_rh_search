@@ -1,23 +1,25 @@
-const { HttpStatusCode } = require('axios');
-const LinkedInSearch = require('../services/linkedin/webscraping/Webscraping');
-const LinkedinWebscraping = require('../services/linkedin/webscraping/WebscrapingPerfil');
+const { HttpStatusCode } = require('axios'); //Status de código com nome
+const linkedinInstance = require('./linkedinInstance');
 const { linkedinServices } = require('../services/linkedin');
-const  createPerfil = require('../database/models/Sql/createTableCandidate');
+//const  createPerfil = require('../database/models/Sql/createTableCandidate');
+const { Leads, criarLead } = require('../database/models/Mongodb/createSchemma');
+const LinkedInSearch = require('../services/linkedin/webscraping/WebscrapingPerfis');
 
 
-//Controller para obter o token do linkedin, para uso dos serviços
+//Controller para obter o Código do linkedin, para uso dos serviços
+
 exports.getCredenciais = async (req, res) => {
     try {
         const code = req.query.code; // Pega o código da query string linkedin (vem na query o token)
         console.log('token_Linkedin:', code);
 
         if (code) {
-            return res.status(200).json({
+            return res.status(HttpStatusCode.Ok).json({
                 Status: 'OK!',
                 token_Linkedin: code
             });
         } else {
-            return res.status(400).json({
+            return res.status(HttpStatusCode.BadRequest).json({
                 Status: 'Nok',
                 Error: [
                     'Status": "Código não encontrado',
@@ -35,12 +37,81 @@ exports.getCredenciais = async (req, res) => {
     }
 };
 
+//Controler para login com linkedin
+
+exports.loginLinkedin = (req, res) => {
+    const email = req.body.email;
+    const password = req.body.password;
+    console.log(req.body);
+
+    const respostaLogin = linkedinInstance.loginCredenciais(email, password);
+
+    try {
+        if (respostaLogin) {
+            return res.status(200).json({
+                status: 'oK',
+                mensagem: 'Login efetuado, intância de login iniciada'
+            });
+        }
+    } catch (error) {
+        return res.status(500).json({
+            status: 'Nok',
+            mensagem: 'Falha ao tentar logar',
+            error: error
+        });
+    }
+};
+
+// capturarLeadsController
+
+exports.capturarLeads = async (req, res) => {
+    const urlPerfil = req.body.Url;
+
+    if (!urlPerfil) {
+        return res.status(400).json({
+            "Status": "NOK",
+            "Messagem": "URL não informada"
+        });
+    }
+
+    console.log(urlPerfil);
+
+    try {
+        const dadosPerfil = await linkedinInstance.pesquisarContato(urlPerfil);
+
+        if (!dadosPerfil.nome) {
+            return res.status(400).json({
+                "Status": "NOK",
+                "Messagem": "Houve um erro, verifique se o perfil do lead é público"
+            });
+        }
+        //createPerfil(await linkedinInstance.ObterDados()); Criar dados no models do mysql
+        criarLead(dadosPerfil);
+
+        return res.status(200).json({
+            "Status": "OK",
+            "Dados": dadosPerfil
+        });
+
+    } catch (erro) {
+        console.log('Erro:', erro);
+        return res.status(500).json({
+            "Status": "ERRO",
+            "Messagem": "Ocorreu um erro ao tentar obter os dados do perfil!"
+        });
+    }
+};
+
+
 //Controller para pesquisar por webscraping, dados do linkedin (Função(cargo) e lugar de pesquisa)
 
 exports.webScraping = async (req, res) => {
     console.log(req.body); //Ver se body vindo ok
 
-    const {searchKeywords, local} = req.body;
+    const {
+        searchKeywords,
+        local
+    } = req.body;
 
     const linkedInSearch = new LinkedInSearch();
     const searchResults = await linkedInSearch.performSearch(searchKeywords, local);
@@ -69,44 +140,64 @@ exports.webScraping = async (req, res) => {
 
 };
 
-//Controller para webScrapping de perfil de candidato
-//Retorna um json com várias campos de contato
 
-exports.capturarLeads = async (req, res) => {
-    const urlPerfil = req.body.Url;
-
-    if (!urlPerfil) {
-        return res.status(400).json({
-            "Status": "NOK",
-            "Messagem": "URL não informada"
-        });
-    }
-
-    console.log(urlPerfil);
+//Controller para pesquisa por Array tags
+exports.verificaDatabase = async (req, res) => {
+    const {
+        Tags
+    } = req.body; // Receba as tags do corpo da requisição POST
 
     try {
-        const Perfilinkedin = new LinkedinWebscraping(urlPerfil);
-        createPerfil(await Perfilinkedin.ObterDados()); //Criar dados no models do mysql
-        console.log(await Perfilinkedin.ObterDados())
-        return res.status(200).json({
-            "Status": "OK",
-            "Dados": await Perfilinkedin.ObterDados()
+        if (!Tags || !Array.isArray(Tags) || Tags.length === 0) {
+            return res.status(400).json({
+                'status': 'Nok',
+                'mensagem': 'Forneça uma matriz de tags válidas'
+            });
+        }
+
+        // Pesquise no banco de dados por documentos que tenham pelo menos uma das tags
+        const usuariosComTags = await Leads.find({
+            Tags: {
+                $in: Tags
+            }
+        }).exec();
+
+        if (usuariosComTags.length === 0) {
+            return res.status(404).json({
+                'status': 'Nok',
+                'mensagem': 'Nenhum usuário encontrado com as tags fornecidas'
+            });
+        }
+
+        console.log('Usuários encontrados:', usuariosComTags);
+
+        res.status(200).json({
+            "status": "OK",
+            "mensagem": "Usuários encontrados com as tags fornecidas",
+            "usuarios": usuariosComTags
         });
-    } catch (erro) {
-        console.log('Erro:', erro);
-        return res.status(500).json({
-            "Status": "ERRO",
-            "Messagem": "Ocorreu um erro ao tentar obter os dados do perfil!"
+    } catch (err) {
+        console.error('Erro ao listar usuários:', err);
+        res.status(500).json({
+            'status': 'Nok',
+            'mensagem': 'Erro ao listar usuários'
         });
     }
 };
 
+
 exports.sendMessage = async (req, res) => {
-    try{
-        const { token, personId, message } = req.body
+    try {
+        const {
+            token,
+            personId,
+            message
+        } = req.body
         const response = await linkedinServices.sendMessage(token, personId, message)
-    } catch(error) {
+    } catch (error) {
         console.log(error);
-        return res.status(HttpStatusCode.InternalServerError).json({errors: ['Erro ao enviar mensagem']})
+        return res.status(HttpStatusCode.InternalServerError).json({
+            errors: ['Erro ao enviar mensagem']
+        })
     }
 }
